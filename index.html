@@ -1,0 +1,258 @@
+<!--
+  Veltrax — Privacy Boundary Diagram (Simulator #2)
+  Single-file, responsive, no deps. Static SVG with toggles that show
+  what crosses the privacy boundary. Red vs green zones; PII handling.
+  Built to match Veltrax UI Spec tokens.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Veltrax — Privacy Boundary</title>
+    <style>
+      :root{
+        --vx-primary:#4c8dff; --vx-bg:#131417; --vx-surface:#1b1d23; --vx-surface-2:#20232b;
+        --vx-border:#2c2f36; --vx-text:#e6e7eb; --vx-muted:#9aa1b3; --vx-good:#4cff88; --vx-danger:#ff453a; --vx-ring:rgba(76,141,255,.45);
+      }
+      *,*::before,*::after{box-sizing:border-box}
+      html,body{height:100%}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;color:var(--vx-text);background:radial-gradient(1000px 400px at 50% -200px, rgba(111,66,193,.25), transparent 60%), var(--vx-bg)}
+      .container{max-width:1200px;margin:0 auto;padding:0 24px}
+      .muted{color:var(--vx-muted)}
+      .hero{padding:36px 0 10px}
+      .hero h1{margin:8px 0 6px;font-size:40px;line-height:1.15}
+      .card{background:linear-gradient(180deg,var(--vx-surface),var(--vx-surface-2));border:1px solid var(--vx-border);border-radius:16px;padding:20px;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+      .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--vx-border);padding:8px 12px;border-radius:999px;background:#181a21;cursor:pointer;font-size:14px}
+      .pill.active{border-color:var(--vx-primary);box-shadow:0 0 0 3px var(--vx-ring)}
+      .row{display:grid;gap:16px}
+      @media (min-width:900px){.row.cols-2{grid-template-columns:1fr 1fr}}
+      .kpi-grid{display:grid;gap:12px}
+      @media (min-width:900px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+      .kpi{background:#16181f;border:1px solid var(--vx-border);border-radius:12px;padding:14px}
+      .kpi .label{font-size:12px;color:var(--vx-muted);margin-bottom:6px}
+      .kpi .value{font-size:20px;font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+      /* Stage */
+      .stage{position:relative;height:560px;border:1px solid var(--vx-border);border-radius:16px;overflow:visible;background:#0f1219}
+      .zone{position:absolute;top:0;bottom:0;padding:18px}
+      .zone.left{left:0;right:50%;background:linear-gradient(180deg, rgba(76,255,136,.08), rgba(76,255,136,.03))}
+      .zone.right{left:50%;right:0;background:linear-gradient(180deg, rgba(255,69,58,.08), rgba(255,69,58,.03))}
+      .zone h3{margin:0 0 8px;font-size:14px;color:var(--vx-muted);font-weight:600}
+      .boundary{position:absolute;top:0;bottom:0;left:50%;width:0;border-left:2px dashed rgba(230,231,235,.22)}
+      .boundary-label{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#11141b;border:1px solid var(--vx-border);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--vx-muted)}
+
+      /* Nodes */
+      .node{position:absolute;display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--vx-border);border-radius:12px;background:#161a22;white-space:nowrap;z-index:1}
+      .node.good{border-color:rgba(76,255,136,.6)}
+      .node.bad{border-color:rgba(255,69,58,.6)}
+      .node .dot{width:12px;height:12px;border-radius:50%}
+      .dot.good{background:var(--vx-good)}
+      .dot.bad{background:var(--vx-danger)}
+
+      /* SVG connectors (behind nodes) */
+      svg.wires{position:absolute;inset:0;pointer-events:none;z-index:0}
+
+      /* Controls */
+      .controls{display:grid;gap:12px}
+      @media (min-width:900px){.controls{grid-template-columns:repeat(3,1fr)}}
+      .toggle{display:flex;align-items:center;gap:10px}
+      .toggle input{appearance:none;width:38px;height:22px;border-radius:999px;background:#1b1f27;border:1px solid var(--vx-border);position:relative;outline:none;cursor:pointer}
+      .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#7f8696;transition:transform .16s ease}
+      .toggle input:checked{background:rgba(76,141,255,.2);border-color:var(--vx-primary)}
+      .toggle input:checked::after{transform:translateX(16px);background:#e6e7eb}
+
+      footer{border-top:1px solid var(--vx-border);margin-top:36px;padding:24px 0 56px}
+    </style>
+  </head>
+  <body>
+    <header class="container hero">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="52" height="12" rx="6" fill="#fff"/><rect x="6" y="30" width="42" height="12" rx="6" fill="#fff"/><rect x="6" y="50" width="26" height="8" rx="4" fill="#6F42C1"/></svg>
+        <span class="muted" style="letter-spacing:.2em;font-size:11px">VELTRAX</span>
+      </div>
+      <h1>Privacy Boundary — What Never Leaves Local Hardware</h1>
+      <p class="muted" style="max-width:860px">Green is local & private. Red is external cloud. Toggle add‑ons to see what crosses the line and how risk changes. PII handling controls affect the color and thickness of the wires.</p>
+    </header>
+
+    <main class="container row cols-2" style="align-items:start">
+      <section class="card">
+        <h2 style="margin:0 0 10px;font-size:18px">Boundary controls</h2>
+        <div class="controls">
+          <label class="toggle"><input id="tg-analytics" type="checkbox"/><span>Cloud analytics SaaS</span></label>
+          <label class="toggle"><input id="tg-llm" type="checkbox"/><span>External LLM API</span></label>
+          <label class="toggle"><input id="tg-enrich" type="checkbox"/><span>3rd‑party enrichment</span></label>
+          <label class="toggle"><input id="tg-storage" type="checkbox"/><span>Cloud storage / data lake</span></label>
+          <label class="toggle"><input id="tg-observe" type="checkbox"/><span>Monitoring / telemetry SaaS</span></label>
+          <label class="toggle"><input id="tg-pii" type="checkbox"/><span>Allow PII to leave boundary</span></label>
+        </div>
+        <div style="margin-top:12px;display:grid;gap:12px">
+          <label class="toggle"><input id="tg-mask" type="checkbox" checked/><span>Mask or tokenize PII before export</span></label>
+          <div class="toggle" style="gap:14px">
+            <label for="events" style="min-width:190px">Events per day</label>
+            <input id="events" type="range" min="100000" max="5000000" step="10000" value="1000000" style="width:100%"/>
+            <span id="out-events" style="font-family:ui-monospace,Menlo,Consolas">1,000,000</span>
+          </div>
+          <div class="toggle" style="gap:14px">
+            <label for="share" style="min-width:190px">Outbound share of data (%)</label>
+            <input id="share" type="range" min="0" max="50" step="1" value="8" style="width:100%"/>
+            <span id="out-share" style="font-family:ui-monospace,Menlo,Consolas">8%</span>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:10px;font-size:12px">Toggles are off by default. Enable only what you truly need in the cloud.</p>
+      </section>
+
+      <section class="card">
+        <h2 style="margin:0 0 10px;font-size:18px">Risk & exposure</h2>
+        <div class="kpi-grid" aria-live="polite">
+          <div class="kpi"><div class="label">Vendors with live data</div><div id="k-vendors" class="value">0</div></div>
+          <div class="kpi"><div class="label">PII outside boundary</div><div id="k-pii" class="value">No</div></div>
+          <div class="kpi"><div class="label">Data leaving / day</div><div id="k-egress" class="value">0 rows</div></div>
+          <div class="kpi"><div class="label">Compliance risk index</div><div id="k-risk" class="value">0</div></div>
+        </div>
+      </section>
+
+      <section class="card" style="grid-column:1/-1">
+        <h2 style="margin:0 0 10px;font-size:18px">Privacy boundary diagram</h2>
+        <div class="stage" id="stage">
+          <div class="zone left"><h3>Local / Private (Veltrax)</h3></div>
+          <div class="zone right"><h3>External Cloud</h3></div>
+          <div class="boundary" aria-hidden="true"></div>
+          <div class="boundary-label">Privacy boundary</div>
+
+          <!-- Left / Local nodes -->
+          <div id="n-sources" class="node good" style="left:6%; top:80px"><span class="dot good"></span>Core / Loans / Cards / CRM</div>
+          <div id="n-veltrax" class="node good" style="left:24%; top:230px"><span class="dot good"></span>Veltrax node (local model)</div>
+          <div id="n-store" class="node good" style="left:10%; top:380px"><span class="dot good"></span>Local datastore & audit log</div>
+
+          <!-- Right / Cloud nodes (add‑ons) -->
+          <div id="n-analytics" class="node bad" style="right:6%; top:70px"><span class="dot bad"></span>Analytics SaaS</div>
+          <div id="n-llm" class="node bad" style="right:20%; top:170px"><span class="dot bad"></span>LLM API</div>
+          <div id="n-enrich" class="node bad" style="right:10%; top:270px"><span class="dot bad"></span>3rd‑party enrichment</div>
+          <div id="n-storage" class="node bad" style="right:22%; top:360px"><span class="dot bad"></span>Cloud storage / lake</div>
+          <div id="n-observe" class="node bad" style="right:8%; top:450px"><span class="dot bad"></span>Monitoring SaaS</div>
+
+          <!-- SVG wires drawn behind nodes -->
+          <svg id="wires" class="wires" role="img" aria-label="Data flows across privacy boundary"></svg>
+        </div>
+        <div class="muted" style="font-size:12px;margin-top:8px">Green zone stays on your hardware. Red zone is optional and increases risk and egress. PII wires turn red and thicker if PII is allowed to leave.</div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="10" width="52" height="12" rx="6" fill="#fff"/><rect x="6" y="30" width="42" height="12" rx="6" fill="#fff"/><rect x="6" y="50" width="26" height="8" rx="4" fill="#6F42C1"/></svg>
+          <span class="muted" style="letter-spacing:.2em;font-size:11px">VELTRAX</span>
+        </div>
+        <div class="muted">Local‑first. Private by default. Built for operators who need provable ROI.</div>
+      </div>
+    </footer>
+
+    <script>
+      const $ = s => document.querySelector(s);
+      const $$ = s => Array.from(document.querySelectorAll(s));
+      const money = n => n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0});
+      const fmt = n => n.toLocaleString();
+
+      const toggles = {
+        analytics: $('#tg-analytics'),
+        llm: $('#tg-llm'),
+        enrich: $('#tg-enrich'),
+        storage: $('#tg-storage'),
+        observe: $('#tg-observe'),
+        pii: $('#tg-pii'),
+        mask: $('#tg-mask')
+      };
+
+      const sliders = {
+        events: $('#events'),
+        share: $('#share')
+      };
+
+      const kpi = {
+        vendors: $('#k-vendors'),
+        pii: $('#k-pii'),
+        egress: $('#k-egress'),
+        risk: $('#k-risk')
+      };
+
+      const nodes = {
+        veltrax: $('#n-veltrax'),
+        sources: $('#n-sources'),
+        analytics: $('#n-analytics'),
+        llm: $('#n-llm'),
+        enrich: $('#n-enrich'),
+        storage: $('#n-storage'),
+        observe: $('#n-observe')
+      };
+
+      // SVG helpers
+      const NS = 'http://www.w3.org/2000/svg';
+      const stage = $('#stage');
+      const svg = $('#wires');
+      function clearSvg(){ while (svg.firstChild) svg.removeChild(svg.firstChild); }
+      function anchor(el){ const a = el.getBoundingClientRect(); const b = stage.getBoundingClientRect(); return { x:a.left-b.left + a.width/2, y:a.top-b.top + a.height/2 }; }
+      function edge(el, side){ const a = el.getBoundingClientRect(); const b = stage.getBoundingClientRect(); const x0=a.left-b.left, y0=a.top-b.top; const w=a.width, h=a.height; switch(side){ case 'left': return {x:x0, y:y0+h/2}; case 'right': return {x:x0+w, y:y0+h/2}; case 'top': return {x:x0+w/2, y:y0}; case 'bottom': return {x:x0+w/2, y:y0+h}; default: return anchor(el);} }
+      function path(a,b,color,width,curv){ const p=document.createElementNS(NS,'path'); const d=`M ${a.x} ${a.y} C ${a.x+curv} ${a.y}, ${b.x-curv} ${b.y}, ${b.x} ${b.y}`; p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width',width); p.setAttribute('stroke-linecap','round'); p.setAttribute('vector-effect','non-scaling-stroke'); svg.appendChild(p);} 
+      function badge(x,y,text,color){ const g=document.createElementNS(NS,'g'); const r=document.createElementNS(NS,'rect'); r.setAttribute('x',x-16); r.setAttribute('y',y-10); r.setAttribute('rx',6); r.setAttribute('width',28+text.length*7); r.setAttribute('height',20); r.setAttribute('fill','rgba(0,0,0,.6)'); r.setAttribute('stroke',color); r.setAttribute('stroke-width',1); const t=document.createElementNS(NS,'text'); t.setAttribute('x',x-8); t.setAttribute('y',y+5); t.setAttribute('fill',color); t.setAttribute('font-size',12); t.textContent=text; g.appendChild(r); g.appendChild(t); svg.appendChild(g);} 
+
+      function draw(){
+        clearSvg();
+        svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+        svg.setAttribute('width', stage.clientWidth);
+        svg.setAttribute('height', stage.clientHeight);
+
+        const enabled = ['analytics','llm','enrich','storage','observe'].filter(k => toggles[k].checked);
+        const allowPII = toggles.pii.checked;
+        const mask = toggles.mask.checked;
+        const piiColor = allowPII ? 'var(--vx-danger)' : 'var(--vx-primary)';
+        const safeColor = 'var(--vx-primary)';
+        const thick = allowPII ? 4.5 : 3.2;
+
+        // Draw from Veltrax → each enabled cloud node, lines start at Veltrax right edge,
+        // end at cloud node left edge; they cross the dashed boundary (center).
+        enabled.forEach(k => {
+          const dst = nodes[k];
+          const a = edge(nodes.veltrax, 'right');
+          const b = edge(dst, 'left');
+          const color = allowPII ? (mask ? '#ff915e' : 'var(--vx-danger)') : safeColor; // orange if masked, red if raw PII
+          path(a,b,color,thick,80);
+          // mark crossing point at boundary (x=50%) with a small dot
+          const midX = stage.clientWidth/2; const t = (midX - a.x) / (b.x - a.x); const midY = a.y + (b.y - a.y) * t; 
+          const dot=document.createElementNS(NS,'circle'); dot.setAttribute('cx',midX); dot.setAttribute('cy',midY); dot.setAttribute('r', allowPII? 5 : 3); dot.setAttribute('fill', allowPII ? (mask ? '#ff915e' : 'var(--vx-danger)') : '#7fb3ff'); dot.setAttribute('opacity', .9); svg.appendChild(dot);
+        });
+
+        // small incoming wires from Sources → Veltrax (local only, green)
+        const sA=edge(nodes.sources,'right'); const sB=edge(nodes.veltrax,'left');
+        path(sA,sB,'var(--vx-good)',3,60);
+        const sC=edge(nodes.store,'top'); const sD=edge(nodes.veltrax,'bottom');
+        path(sC,sD,'var(--vx-good)',2.8,60);
+
+        // KPI updates
+        const events = parseInt(sliders.events.value);
+        const share = parseInt(sliders.share.value)/100;
+        const rowsLeaving = enabled.length ? Math.round(events * share) : 0;
+        const risk = Math.max(0, Math.min(100, 10 + enabled.length*14 + (allowPII?32:0) - (mask?10:0)));
+        $('#out-events').textContent = fmt(events);
+        $('#out-share').textContent = `${Math.round(share*100)}%`;
+        kpi.vendors.textContent = enabled.length;
+        kpi.pii.textContent = enabled.length ? (allowPII ? (mask? 'Masked' : 'Yes') : 'No') : 'No';
+        kpi.egress.textContent = `${rowsLeaving.toLocaleString()} rows`;
+        kpi.risk.textContent = risk;
+      }
+
+      // Bind all inputs
+      $$('#tg-analytics, #tg-llm, #tg-enrich, #tg-storage, #tg-observe, #tg-pii, #tg-mask, #events, #share').forEach(el=>{
+        el.addEventListener('input', draw);
+      });
+
+      // Handle layout changes
+      window.addEventListener('resize', () => { draw(); });
+
+      // Initial draw
+      draw();
+    </script>
+  </body>
+</html>
