@@ -1,17 +1,14 @@
 <!--
-  Veltrax — Privacy Boundary Diagram (Center Company Node)
-  Single-file, responsive, mobile-first. No deps.
-  Shows: What never leaves local hardware. Green (Veltrax, local). Red/orange (external cloud).
-  Central "Your Company" node. Left side = Veltrax advantages; right side = typical cloud limits.
-  Toggles let you add cloud add-ons and control PII handling; risk metrics update live.
+  Veltrax — Privacy Boundary Diagram (v3)
+  Fixes: stacked columns, clean connections, lines behind nodes, mobile-first.
+  Single-file; copy-paste into GitHub Pages.
 -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Veltrax — Privacy Boundary (Center Node)</title>
+    <title>Veltrax — Privacy Boundary</title>
     <style>
       :root{
         --vx-primary:#4c8dff; --vx-bg:#131417; --vx-surface:#1b1d23; --vx-surface-2:#20232b;
@@ -19,53 +16,44 @@
       }
       *,*::before,*::after{box-sizing:border-box}
       html,body{height:100%}
-      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica Neue,Arial;color:var(--vx-text);background:radial-gradient(1000px 400px at 50% -200px, rgba(111,66,193,.25), transparent 60%), var(--vx-bg)}
-      a{color:var(--vx-primary);text-decoration:none}
-      a:hover{text-decoration:underline}
-      .container{max-width:1200px;margin:0 auto;padding:0 20px}
-      .hero{padding:32px 0 8px}
-      .hero h1{margin:8px 0 6px;font-size:36px;line-height:1.15}
+      body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;color:var(--vx-text);background:radial-gradient(1000px 400px at 50% -200px, rgba(111,66,193,.25), transparent 60%), var(--vx-bg)}
+      .container{max-width:1200px;margin:0 auto;padding:0 24px}
+      .hero{padding:36px 0 10px}
+      .hero h1{margin:8px 0 6px;font-size:38px;line-height:1.15}
       .muted{color:var(--vx-muted)}
-      .card{background:linear-gradient(180deg,var(--vx-surface),var(--vx-surface-2));border:1px solid var(--vx-border);border-radius:16px;padding:18px;box-shadow:0 1px 0 rgba(0,0,0,.25)}
-      .grid{display:grid;gap:16px}
-      @media (min-width:980px){.grid.cols-2{grid-template-columns:1.2fr .8fr}}
-      .kpi-grid{display:grid;gap:12px}
-      @media (min-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+      .card{background:linear-gradient(180deg,var(--vx-surface),var(--vx-surface-2));border:1px solid var(--vx-border);border-radius:16px;padding:20px;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+      .row{display:grid;gap:16px}
+      @media(min-width:1000px){.row.cols-2{grid-template-columns:1fr 1fr}}
+      .switch{position:relative;display:inline-flex;align-items:center;gap:8px}
+      .switch input{appearance:none;width:44px;height:26px;border-radius:999px;background:#1a1e27;border:1px solid var(--vx-border);position:relative;outline:none;cursor:pointer;box-shadow:0 0 0 0 var(--vx-ring);transition:120ms}
+      .switch input:checked{background:rgba(76,141,255,.18);border-color:var(--vx-primary);box-shadow:0 0 0 3px var(--vx-ring)}
+      .switch input::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#cfd2da;transition:transform .18s}
+      .switch input:checked::after{transform:translateX(18px)}
       .kpi{background:#16181f;border:1px solid var(--vx-border);border-radius:12px;padding:12px}
-      .kpi .label{font-size:12px;color:var(--vx-muted);margin-bottom:4px}
-      .kpi .value{font-size:22px;font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-      .switch{display:inline-flex;align-items:center;gap:10px}
-      .switch input{appearance:none;width:44px;height:24px;border-radius:999px;background:#262a35;position:relative;outline:none;border:1px solid var(--vx-border);cursor:pointer}
-      .switch input:checked{background:#203254;border-color:#2a3961;box-shadow:0 0 0 3px var(--vx-ring)}
-      .switch input::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#aab2c3;transition:transform 120ms ease-out}
-      .switch input:checked::after{transform:translateX(20px);background:#cfe1ff}
-      .range-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
-      .range-row label{font-weight:600}
-      .range-row small{display:block;color:var(--vx-muted);font-weight:400}
-      input[type=range]{width:100%}
+      .kpi h4{margin:0 0 6px;font-size:12px;color:var(--vx-muted)}
+      .kpi .v{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:18px}
 
-      /* Diagram stage */
-      .stage{position:relative;min-height:520px;border:1px solid var(--vx-border);border-radius:16px;overflow:visible;padding:18px;background:
-        linear-gradient(90deg,rgba(76,255,136,.08),rgba(76,255,136,.03) 42%, rgba(255,69,58,.03) 58%, rgba(255,69,58,.08)),
-        #0f1219}
-      .stage svg{position:absolute;inset:0;pointer-events:none;z-index:0}
-      .zone-label{position:absolute;top:10px;font-size:12px;color:var(--vx-muted)}
-      .zone-left{left:18px}
-      .zone-right{right:18px}
-      .chip{padding:8px 12px;border-radius:10px;border:1px solid var(--vx-border);background:#161a22;white-space:nowrap}
-      .chip.good{border-color:rgba(76,255,136,.55)}
-      .chip.bad{border-color:rgba(255,69,58,.55)}
-      .chip.center{background:#19202b;border-color:#3a4252}
-      .row{position:absolute;left:18px;right:18px;display:flex;gap:12px;flex-wrap:wrap}
-      .row.left{top:110px;justify-content:flex-start}
-      .row.right{top:110px;justify-content:flex-end}
-      .row.center{top:260px;justify-content:center}
-      .hint{position:absolute;bottom:12px;left:18px;color:var(--vx-muted);font-size:11px}
-      .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--vx-border);font-size:11px;color:var(--vx-muted);background:#141821}
+      /* Diagram */
+      .stage{position:relative;background:#0f1219;border:1px solid var(--vx-border);border-radius:16px;min-height:520px;overflow:visible}
+      .legend{display:flex;gap:10px;position:absolute;bottom:12px;left:12px;font-size:12px;color:var(--vx-muted);flex-wrap:wrap}
+      .cols{position:absolute;inset:20px 20px 24px 20px;display:grid;gap:16px}
+      @media(min-width:900px){.cols{grid-template-columns:1fr 360px 1fr}}
+      @media(max-width:899px){.cols{grid-template-columns:1fr;}}
+      .stack{display:flex;flex-direction:column;gap:12px}
+      .node{padding:10px 12px;border-radius:12px;border:1px solid var(--vx-border);background:#161a22;white-space:nowrap;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+      .node.good{border-color:rgba(76,255,136,.45)}
+      .node.bad{border-color:rgba(255,69,58,.55)}
+      .company{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+      .company .badge{font-size:12px;color:var(--vx-muted)}
+      .company .node{width:280px;text-align:center}
+      .cap-contrast{display:flex;gap:8px;flex-wrap:wrap}
+      .cap{font-size:11px;border:1px solid var(--vx-border);padding:6px 8px;border-radius:999px;background:#141821}
+      .cap.good{border-color:rgba(76,255,136,.4)}
+      .cap.bad{border-color:rgba(255,69,58,.5)}
 
-      /* Keep nodes above wires */
-      .chip,.row{position:relative;z-index:1}
-
+      /* keep nodes above the lines */
+      .cols, .node, .company{position:relative;z-index:1}
+      svg.wires{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}
       footer{border-top:1px solid var(--vx-border);margin-top:36px;padding:24px 0 48px}
     </style>
   </head>
@@ -76,90 +64,85 @@
         <span class="muted" style="letter-spacing:.2em;font-size:11px">VELTRAX</span>
       </div>
       <h1>Privacy Boundary — What Never Leaves Local Hardware</h1>
-      <p class="muted" style="max-width:900px">Green is local & private (Veltrax). Red is external cloud. The company node is centered. Toggle add‑ons to see what crosses the line and how risk changes. PII handling affects the color and thickness of the wires.</p>
+      <p class="muted" style="max-width:900px">Green is local & private (Veltrax). Red is external cloud. We center your company and show clean, top‑down flows. Toggle add‑ons to see what crosses the line. PII handling changes the color and thickness of the wires.</p>
     </header>
 
-    <main class="container grid cols-2">
-      <!-- Controls -->
+    <main class="container row cols-2">
       <section class="card">
-        <h2 style="margin:0 0 10px;font-size:18px">Boundary controls</h2>
-        <div class="grid" style="gap:12px">
-          <div class="switch"><input id="t-analytics" type="checkbox" checked><label for="t-analytics">Cloud analytics SaaS</label></div>
-          <div class="switch"><input id="t-llm" type="checkbox" checked><label for="t-llm">External LLM API</label></div>
-          <div class="switch"><input id="t-third" type="checkbox" checked><label for="t-third">3rd‑party enrichment</label></div>
-          <div class="switch"><input id="t-storage" type="checkbox" checked><label for="t-storage">Cloud storage / data lake</label></div>
-          <div class="switch"><input id="t-monitor" type="checkbox" checked><label for="t-monitor">Monitoring / telemetry SaaS</label></div>
-          <hr style="border:none;border-top:1px solid var(--vx-border)">
-          <div class="switch"><input id="t-mask" type="checkbox" checked><label for="t-mask">Mask or tokenize PII before export</label></div>
-          <div class="switch"><input id="t-allow" type="checkbox"><label for="t-allow">Allow PII to leave boundary</label></div>
-          <div class="range-row">
-            <label class="mono">Events per day (<span id="out-events">1,000,000</span>)<small>Typical total event volume</small></label>
-            <input id="in-events" type="range" min="100000" max="2000000" step="10000" value="1000000">
-          </div>
-          <div class="range-row">
-            <label class="mono">Outbound share of data (<span id="out-share">8%</span>)<small>How much data goes to the cloud</small></label>
-            <input id="in-share" type="range" min="0" max="50" step="1" value="8">
-          </div>
+        <h3 style="margin:0 0 10px">Boundary controls</h3>
+        <div class="row" style="grid-template-columns:1fr 1fr">
+          <label class="switch"><input id="t-analytics" type="checkbox" checked><span>Cloud analytics SaaS</span></label>
+          <label class="switch"><input id="t-llmapi" type="checkbox" checked><span>External LLM API</span></label>
+          <label class="switch"><input id="t-enrich" type="checkbox" checked><span>3rd‑party enrichment</span></label>
+          <label class="switch"><input id="t-lake" type="checkbox" checked><span>Cloud storage / data lake</span></label>
+          <label class="switch"><input id="t-mon" type="checkbox" checked><span>Monitoring / telemetry SaaS</span></label>
         </div>
-        <p class="muted" style="margin:12px 0 0;font-size:12px">Toggles are off by default. Enable only what you truly need in the cloud.</p>
+        <hr style="border:none;border-top:1px solid var(--vx-border);margin:14px 0">
+        <div class="row" style="grid-template-columns:1fr 1fr">
+          <label class="switch"><input id="t-mask" type="checkbox" checked><span>Mask or tokenize PII before export</span></label>
+          <label class="switch"><input id="t-allow" type="checkbox"><span>Allow PII to leave boundary</span></label>
+        </div>
+        <div class="row" style="grid-template-columns:1fr 1fr;margin-top:12px">
+          <div class="kpi"><h4>Events per day</h4><div class="v" id="k-events">80,000</div><input id="in-events" type="range" min="10000" max="1000000" step="10000" value="80000"></div>
+          <div class="kpi"><h4>Outbound share of data</h4><div class="v" id="k-share">8%</div><input id="in-share" type="range" min="0" max="50" step="1" value="8"></div>
+        </div>
       </section>
 
-      <!-- Risk / exposure + capability contrast -->
       <section class="card">
-        <h2 style="margin:0 0 10px;font-size:18px">Risk & exposure</h2>
-        <div class="kpi-grid">
-          <div class="kpi"><div class="label">Vendors with live data</div><div id="k-vendors" class="value">0</div></div>
-          <div class="kpi"><div class="label">PII outside boundary</div><div id="k-pii" class="value">No</div></div>
-          <div class="kpi"><div class="label">Data leaving / day</div><div id="k-rows" class="value">0 rows</div></div>
-          <div class="kpi"><div class="label">Compliance risk index</div><div id="k-risk" class="value">0</div></div>
+        <h3 style="margin:0 0 10px">Risk & exposure</h3>
+        <div class="row" style="grid-template-columns:repeat(4,1fr)">
+          <div class="kpi"><h4>Vendors with live data</h4><div class="v" id="k-vendors">5</div></div>
+          <div class="kpi"><h4>PII outside boundary</h4><div class="v" id="k-pii">Masked</div></div>
+          <div class="kpi"><h4>Data leaving / day</h4><div class="v" id="k-leaving">6,400 rows</div></div>
+          <div class="kpi"><h4>Compliance risk index</h4><div class="v" id="k-risk">37</div></div>
         </div>
-        <div class="card" style="margin-top:12px">
-          <strong style="font-size:13px">Capability contrast</strong>
-          <div style="display:grid;gap:10px;margin-top:8px">
-            <div>
-              <span class="badge">No API rate limits</span>
-              <span class="badge">No per‑token costs</span>
-              <span class="badge">Local LLM (zero‑egress)</span>
-              <span class="badge">Custom adapters & schema</span>
-            </div>
-            <div>
-              <span class="badge">Rate‑limited APIs</span>
-              <span class="badge">Per‑tokenized pricing</span>
-              <span class="badge">Generic models</span>
-              <span class="badge">Shared multi‑tenant infra</span>
-            </div>
+        <div class="kpi" style="margin-top:12px">
+          <h4>Capability contrast</h4>
+          <div class="cap-contrast">
+            <span class="cap good">No API rate limits</span>
+            <span class="cap good">No per‑token costs</span>
+            <span class="cap good">Local LLM (zero‑egress)</span>
+            <span class="cap good">Custom adapters & schema</span>
+            <span class="cap bad">Rate‑limited APIs</span>
+            <span class="cap bad">Per‑tokenized pricing</span>
+            <span class="cap bad">Generic models</span>
+            <span class="cap bad">Shared multi‑tenant infra</span>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Diagram -->
-    <section class="container" style="margin-top:16px">
-      <div class="card stage" id="stage">
-        <div class="zone-label zone-left">Local / Private (Veltrax)</div>
-        <div class="zone-label zone-right">External cloud</div>
+    <section class="container card" style="margin-top:20px">
+      <h3 style="margin:0 0 10px">Privacy boundary diagram</h3>
+      <div class="stage" id="stage">
+        <!-- wiring svg sits behind everything -->
+        <svg class="wires" id="wires" role="img" aria-label="Privacy boundary flows"></svg>
 
-        <div class="row left" id="left-row">
-          <div class="chip good" id="n-core">Core / Loans / Cards / CRM<br><small class="muted">No API limits · No per‑token cost</small></div>
-          <div class="chip good" id="n-llm">Local LLM (RAG, zero‑egress)</div>
-          <div class="chip good" id="n-store">Local datastore & audit log<br><small class="muted">Custom to your business</small></div>
+        <!-- three stacked columns (left → center → right); become vertical on mobile -->
+        <div class="cols">
+          <!-- Left: Veltrax (green) -->
+          <div class="stack" id="col-left">
+            <div class="node good" id="vx-core">Core / Loans / Cards / CRM<br><small class="muted">No API limits · No per‑token cost</small></div>
+            <div class="node good" id="vx-llm">Local LLM (RAG, zero‑egress)</div>
+            <div class="node good" id="vx-store">Local datastore & audit log<br><small class="muted">Custom to your business</small></div>
+          </div>
+
+          <!-- Center: Company boundary -->
+          <div class="company" id="col-center">
+            <div class="node" id="company">Your Company<br><span class="badge">Privacy boundary</span></div>
+          </div>
+
+          <!-- Right: Cloud (red) -->
+          <div class="stack" id="col-right">
+            <div class="node bad" id="c-analytics">Analytics SaaS<br><small class="muted">rate‑limited</small></div>
+            <div class="node bad" id="c-llmapi">LLM API<br><small class="muted">per‑token</small></div>
+            <div class="node bad" id="c-enrich">3rd‑party enrichment<br><small class="muted">generic</small></div>
+            <div class="node bad" id="c-lake">Cloud storage / lake</div>
+            <div class="node bad" id="c-mon">Monitoring SaaS</div>
+          </div>
         </div>
 
-        <div class="row center">
-          <div class="chip center" id="n-company" style="width:220px;text-align:center">Your Company<br><small class="muted">Privacy boundary</small></div>
-        </div>
-
-        <div class="row right" id="right-row">
-          <div class="chip bad" id="c-analytics">Analytics SaaS<br><small class="muted">rate‑limited</small></div>
-          <div class="chip bad" id="c-llm">LLM API<br><small class="muted">per‑token</small></div>
-          <div class="chip bad" id="c-third">3rd‑party enrichment<br><small class="muted">generic</small></div>
-          <div class="chip bad" id="c-storage">Cloud storage / lake</div>
-          <div class="chip bad" id="c-monitor">Monitoring SaaS</div>
-        </div>
-
-        <svg id="wires" aria-hidden="true"></svg>
-
-        <div class="hint">Green zone stays on your hardware. Red zone is optional and increases risk and egress. Wires turn <span style="color:var(--vx-danger)">red & thicker</span> if PII is allowed to leave; they are <span style="color:var(--vx-amber)">amber</span> when masked.</div>
+        <div class="legend"><span class="node good" style="padding:6px 10px">Local / Private (Veltrax)</span><span class="node bad" style="padding:6px 10px">External cloud</span><span class="muted">PII allowed = red & thicker · Masked = amber · Metadata only = thin green</span></div>
       </div>
     </section>
 
@@ -174,115 +157,103 @@
     </footer>
 
     <script>
+      // Simple helpers
       const $ = s=>document.querySelector(s);
-      const wires = $('#wires');
-      const stage = $('#stage');
+      const $$ = s=>Array.from(document.querySelectorAll(s));
       const NS = 'http://www.w3.org/2000/svg';
 
-      function EL(id){return document.getElementById(id)}
-
-      function anchor(el, pos='center'){
+      // Anchor utilities (edge positions relative to root)
+      function anchor(el, root, which='center'){
         const eb = el.getBoundingClientRect();
-        const rb = stage.getBoundingClientRect();
+        const rb = root.getBoundingClientRect();
         const cx = eb.left - rb.left + eb.width/2;
-        if(pos==='top') return {x:cx, y: eb.top-rb.top};
-        if(pos==='bottom') return {x:cx, y: eb.top-rb.top + eb.height};
-        if(pos==='left') return {x: eb.left-rb.left, y: eb.top-rb.top + eb.height/2};
-        if(pos==='right') return {x: eb.left-rb.left + eb.width, y: eb.top-rb.top + eb.height/2};
-        return {x:cx, y: eb.top-rb.top + eb.height/2};
+        const cy = eb.top  - rb.top  + eb.height/2;
+        if(which==='left')   return {x: eb.left - rb.left, y: cy};
+        if(which==='right')  return {x: eb.right- rb.left, y: cy};
+        if(which==='top')    return {x: cx, y: eb.top - rb.top};
+        if(which==='bottom') return {x: cx, y: eb.bottom - rb.top};
+        return {x: cx, y: cy};
       }
-
-      function path(a,b,color,width,curv=70){
+      function pathC(a,b,curv=64){
+        return `M ${a.x} ${a.y} C ${a.x+curv} ${a.y}, ${b.x-curv} ${b.y}, ${b.x} ${b.y}`;
+      }
+      function drawWire(svg, a, b, color, width){
         const p = document.createElementNS(NS,'path');
-        const d = `M ${a.x} ${a.y} C ${a.x} ${a.y+curv}, ${b.x} ${b.y-curv}, ${b.x} ${b.y}`;
-        p.setAttribute('d', d);
+        p.setAttribute('d', pathC(a,b));
         p.setAttribute('fill','none');
-        p.setAttribute('stroke', color);
-        p.setAttribute('stroke-width', width);
+        p.setAttribute('stroke',color);
+        p.setAttribute('stroke-width',width);
         p.setAttribute('stroke-linecap','round');
         p.setAttribute('vector-effect','non-scaling-stroke');
-        wires.appendChild(p);
-        return p;
+        svg.appendChild(p);
       }
+      function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
 
-      function clear(){while(wires.firstChild) wires.removeChild(wires.firstChild)}
+      // Compute risk & draw diagram
+      function redraw(){
+        // KPIs
+        const events = Number($('#in-events').value);
+        const share  = Number($('#in-share').value)/100;
+        const enabledCloud = ['t-analytics','t-llmapi','t-enrich','t-lake','t-mon'].filter(id=>$('#'+id).checked).length;
+        const allowPII = $('#t-allow').checked; const masked = $('#t-mask').checked;
+        const rowsLeaving = Math.round(events * share);
+        $('#k-events').textContent = events.toLocaleString();
+        $('#k-share').textContent  = Math.round(share*100)+'%';
+        $('#k-vendors').textContent = enabledCloud;
+        $('#k-leaving').textContent = rowsLeaving.toLocaleString()+ ' rows';
+        $('#k-pii').textContent = allowPII ? 'Yes' : (masked ? 'Masked' : 'Metadata only');
+        // naive risk index: vendors*7 + rows factor + pii
+        const risk = Math.min(99, Math.round(enabledCloud*7 + (rowsLeaving/10000) + (allowPII?25:(masked?10:2))));
+        $('#k-risk').textContent = risk;
 
-      function draw(){
-        clear();
-        // responsive viewport
-        wires.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
-        wires.setAttribute('width', stage.clientWidth);
-        wires.setAttribute('height', stage.clientHeight);
+        // Diagram wires
+        const stage = $('#stage');
+        const svg = $('#wires');
+        svg.setAttribute('viewBox', `0 0 ${stage.clientWidth} ${stage.clientHeight}`);
+        svg.setAttribute('width', stage.clientWidth);
+        svg.setAttribute('height', stage.clientHeight);
+        clear(svg);
 
-        // Left (Veltrax) → Company
-        const company = EL('n-company');
-        const vxNodes = ['n-core','n-llm','n-store'];
-        const green = getComputedStyle(document.documentElement).getPropertyValue('--vx-good').trim();
-        vxNodes.forEach(id=>{
-          path(anchor(EL(id),'right'), anchor(company,'left'), green, 4, 80);
-        });
-
-        // Right (Cloud) → Company
-        const toggles = {
-          analytics: EL('t-analytics').checked,
-          llm: EL('t-llm').checked,
-          third: EL('t-third').checked,
-          storage: EL('t-storage').checked,
-          monitor: EL('t-monitor').checked,
-        };
-        const allowPII = EL('t-allow').checked;
-        const masked = EL('t-mask').checked;
-
-        const color = allowPII ? getComputedStyle(document.documentElement).getPropertyValue('--vx-danger').trim() : (masked ? getComputedStyle(document.documentElement).getPropertyValue('--vx-amber').trim() : '#556');
-        const width = allowPII ? 5.5 : (masked ? 4 : 2.5);
-
+        const company = $('#company');
+        const leftIds  = ['#vx-core','#vx-llm','#vx-store'];
         const rightMap = [
-          ['c-analytics','analytics'],
-          ['c-llm','llm'],
-          ['c-third','third'],
-          ['c-storage','storage'],
-          ['c-monitor','monitor'],
+          ['#c-analytics','#t-analytics'],
+          ['#c-llmapi','#t-llmapi'],
+          ['#c-enrich','#t-enrich'],
+          ['#c-lake','#t-lake'],
+          ['#c-mon','#t-mon']
         ];
-        rightMap.forEach(([node,key])=>{
-          if(!toggles[key]) return; // draw only if enabled
-          path(anchor(EL(node),'left'), anchor(company,'right'), color, width, 80);
+
+        const green = getComputedStyle(document.documentElement).getPropertyValue('--vx-good').trim();
+        const red   = getComputedStyle(document.documentElement).getPropertyValue('--vx-danger').trim();
+        const amber = getComputedStyle(document.documentElement).getPropertyValue('--vx-amber').trim();
+
+        // Left → Company (always local, thin green)
+        leftIds.forEach(sel=>{
+          const a = anchor($(sel), stage, 'right');
+          const b = anchor(company, stage, (window.innerWidth<900?'top':'left'));
+          drawWire(svg, a, b, green, 3);
         });
 
-        updateRisk();
+        // Company → Cloud nodes (conditional)
+        rightMap.forEach(([nodeSel, toggleSel])=>{
+          if(!$(toggleSel).checked) return;
+          const a = anchor(company, stage, (window.innerWidth<900?'bottom':'right'));
+          const b = anchor($(nodeSel), stage, (window.innerWidth<900?'top':'left'));
+          let color = green, width = 3;
+          if(allowPII){ color = red; width = 5; }
+          else if(masked){ color = amber; width = 4; }
+          drawWire(svg, a, b, color, width);
+        });
       }
 
-      function numEnabled(){
-        return ['t-analytics','t-llm','t-third','t-storage','t-monitor'].filter(id=>EL(id).checked).length;
-      }
+      // Bind controls
+      $$('#in-events,#in-share,#t-analytics,#t-llmapi,#t-enrich,#t-lake,#t-mon,#t-mask,#t-allow'.split(',').join(',#'))
+        .forEach(el=>el.addEventListener('input', redraw));
+      window.addEventListener('resize', ()=>{ requestAnimationFrame(redraw); });
 
-      function updateRisk(){
-        const vendors = numEnabled();
-        const allowPII = EL('t-allow').checked;
-        const masked = EL('t-mask').checked;
-        const events = parseInt(EL('in-events').value);
-        const share = parseInt(EL('in-share').value)/100;
-        const rowsLeaving = Math.round(events * share * (vendors/5));
-        EL('out-events').textContent = events.toLocaleString();
-        EL('out-share').textContent = `${Math.round(share*100)}%`;
-        EL('k-vendors').textContent = vendors.toString();
-        EL('k-pii').textContent = allowPII ? (masked ? 'Masked' : 'Yes') : 'No';
-        EL('k-rows').textContent = `${rowsLeaving.toLocaleString()} rows`;
-        // simple composite index
-        let risk = vendors*7 + Math.round(share*100)/2 + (allowPII? (masked?10:30):0);
-        if(risk>100) risk=100; EL('k-risk').textContent = risk.toString();
-      }
-
-      // Bind toggles and sliders
-      ['t-analytics','t-llm','t-third','t-storage','t-monitor','t-mask','t-allow'].forEach(id=>{
-        EL(id).addEventListener('change', draw);
-      });
-      ['in-events','in-share'].forEach(id=>{
-        EL(id).addEventListener('input', ()=>{updateRisk();});
-      });
-
-      // Redraw on resize to keep anchors aligned
-      addEventListener('resize', ()=>{ draw(); });
-      addEventListener('DOMContentLoaded', ()=>{ draw(); updateRisk(); setTimeout(draw, 80); setTimeout(draw, 200); });
+      // init
+      redraw();
     </script>
   </body>
 </html>
